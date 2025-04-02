@@ -5,10 +5,10 @@
   import OptionsList from './components/OptionsList.vue';
 
   import { ref, computed, reactive, onMounted } from 'vue';
-  import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames } from './types/allTypes';
+  import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames, lineHeightOptionsObj } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faGripLines, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { common, createLowlight } from 'lowlight';
 
@@ -32,6 +32,9 @@
   import Image from '@tiptap/extension-image';
   import Youtube from '@tiptap/extension-youtube';
 
+  /* Custom extensions goes here */
+  import { LineHeight } from './custom-extensions/lineHeight';
+
   const dialogBoxType = ref<allowedElementNamespace>(null);
   const optionsListType = ref<allowedElementNamespace>(null);
 
@@ -40,6 +43,7 @@
   const [isTextSelected, selectionText] = [ref<boolean>(false), ref<string>('')];
   const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
   const fontFamilyInput = { current: ref<string>('Plus Jakarta Sans'), default: 'Plus Jakarta Sans' }
+  const lineHeightInput = { current: ref<string>('150%'), default: '150%', convertFixedToPercentage: handleConvertFixedToPercentage }
   const workspaceEl = ref<null | HTMLElement>(null);
   const selectedEditorElement = ref<null | HTMLElement>(null);
 
@@ -70,6 +74,7 @@
   const editor = useEditor({
     content: "",
     extensions: [
+      LineHeight,
       FontSize,
       FontFamily,
       Underline,
@@ -166,6 +171,11 @@
     dialogBoxType.value = dialogBoxName; 
   }
 
+  function handleConvertFixedToPercentage(fixedValue: string | number): string {
+    const fixedValue_number = (typeof fixedValue === 'string')?  parseFloat(fixedValue) : fixedValue;
+    return (fixedValue_number * 100).toString() + `%`;
+  }
+
   function handleDeleteNode() {
     selectedEditorElement.value?.remove();
     selectedEditorElement.value = null;
@@ -206,6 +216,12 @@
     fontFamilyInput.current.value = newFontFamily;
     updateEditorFontFamily();
     handleCloseOptionsList();
+  }
+
+  function handleSetLineHeight({displayName, value}: lineHeightOptionsObj) {
+      lineHeightInput.current.value = displayName;
+      updateEditorLineHeight(value);
+      handleCloseOptionsList();
   }
   
   function testSelectedNodeOrigin(anchorNode: Node | null) {
@@ -352,6 +368,13 @@
 
   const updateEditorFontFamily = () => editor?.value?.chain().focus().setFontFamily(`${fontFamilyInput.current.value}`).run();
 
+  const updateEditorLineHeight = (value: number) => {
+    /* THE LINE IS IGNORED, BECAUSE LINE HEIGHT IS A CUSTOM EXTENSION, THAT IS NOT INITIALLY ADDED TO CHAIN COMMAND TYPE */
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    editor?.value?.chain().focus().setLineHeight(value.toString()).run();
+  }
+
   const retrieveFontSizeValue = function(): number {
     const retrievedFontSize: string = editor?.value?.getAttributes('textStyle').fontSize || '';
     return retrievedFontSize === '' ?   fontSizeInput.default  :  parseInt(retrievedFontSize.replace(/\D+/g, ""));
@@ -361,6 +384,11 @@
     const retrievedFontFamily: string = editor?.value?.getAttributes('textStyle').fontFamily || '';
     return retrievedFontFamily === '' ? fontFamilyInput.default :  retrievedFontFamily;
   });
+
+  const retrieveLineHeight = computed(() => {
+    const retrievedLineHeight: any = editor?.value?.getAttributes('paragraph').lineHeight || '';
+    return retrievedLineHeight === '' ? lineHeightInput.default : lineHeightInput.convertFixedToPercentage(retrievedLineHeight);
+  })
 
   const openOptionsList = function(ev: FocusEvent, listCategory: availableOptionsListNames) {
     createOptionsList(ev, listCategory);
@@ -372,6 +400,12 @@
   }
 
   const selectedEditorElement_getTagName = computed(() => selectedEditorElement.value?.nodeName.toLowerCase());
+
+  const testIfNodeHasDefaultLineHeight = computed(() => {  
+      if(!(editor?.value?.getAttributes('paragraph').lineHeight)) return false;
+      return lineHeightInput.convertFixedToPercentage(editor?.value?.getAttributes('paragraph').lineHeight) !== lineHeightInput.default;
+    }
+  );
   
   const checkDocumentTitle = function(): void {
     if(!documentTitle.current.value.length) {documentTitle.current.value = documentTitle.default };
@@ -722,7 +756,34 @@
 
           </div>
 
-          <span class="mx-8"> <!-- REMOVE THIS SPAN ELEMENT AFTER DEVELOPMENT --> </span>
+          <span class="mx-6"> <!-- REMOVE THIS SPAN ELEMENT AFTER DEVELOPMENT --> </span>
+
+          <div class="grid grid-rows-1 grid-cols-[1fr_auto]
+            outline-gray-500 bg-[#eee] border-2 border-[#222] appearance-none rounded 
+          ">
+
+            <div class="w-20 my-auto font-semibold text-center py-1 px-3 truncate hover:cursor-text"
+              @click="(ev) => openOptionsList(ev, 'lineheight')"
+            >  
+              <p class="text-xs  pointer-events-none text-center truncate"> {{ retrieveLineHeight }} </p>
+
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-3 border-l-2 border-l-solid border-l-[#222]
+                  transition-colors pointer-events-none hover:cursor-default
+                "
+                data-role="style"
+                :class="testIfNodeHasDefaultLineHeight? `bg-[#222b]` : `bg-[#eeeb]`"
+
+            >
+              <FontAwesomeIcon :icon="faGripLines" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none hover:cursor-default" 
+                :class="testIfNodeHasDefaultLineHeight? `text-[#ddd]` : `text-[#333]`"
+              />
+            </div>
+
+          </div>
+
+          <span class="mx-6"> <!-- REMOVE THIS SPAN ELEMENT AFTER DEVELOPMENT --> </span>
 
           <div> 
             <div class="w-32 font-semibold text-center py-1 px-3  truncate outline-gray-500 bg-[#eee] border-2 border-[#222] appearance-none cursor-pointer rounded hover:cursor-text"
@@ -755,6 +816,7 @@
       @handleCloseOptionsList="handleCloseOptionsList"
       @handleSetFontSize="handleSetFontSize"
       @handleSetFontFamily="handleSetFontFamily"
+      @handleSetLineHeight="handleSetLineHeight"
     />
   </div>
 
