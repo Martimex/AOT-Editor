@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { defineEmits } from 'vue';
-    import type { lineHeightOptionsObj } from '@/types/allTypes';
+    import type { lineHeightOptionsObj } from '../../types/allTypes';
 
     const emits = defineEmits(['confirmSetLineHeight']);
 

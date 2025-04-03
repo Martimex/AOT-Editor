@@ -12,7 +12,7 @@ const inputsData: linkInputs = {
 function validateVideoURL(textToVerify: string): true | string {
     const textToVerify_Trimmed = textToVerify.trim(); // This variable removes spaces from beginning and end of the string
     if(!textToVerify_Trimmed.length) { return `A URL address cannot be empty` };
-    if(!(/^(https?:\/\/www.youtube.com\/watch[?]v=)?([a-zA-Z0-9]+)$/.test(textToVerify_Trimmed))) { return `Please provide a valid URL address` };
+    if(!(/^(https?:\/\/www.youtube.com\/watch[?]v=)?([a-zA-Z0-9_-]+)$/.test(textToVerify_Trimmed))) { return `Please provide a valid URL address` };
     return true;
 }
 

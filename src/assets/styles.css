@@ -20,6 +20,23 @@ a:hover {
 }
 
 
+/* Used to style a iframe (video) & image tags */
+
+iframe {
+    padding-block: 1.5rem;
+    max-width: 100%;
+}
+
+img {
+    padding-block: 1.25rem;
+    max-width: 100%;
+}
+
+iframe:hover, img:hover  {
+    background: #eeec;
+}
+
+
 
 /* For styling code blocks */
 

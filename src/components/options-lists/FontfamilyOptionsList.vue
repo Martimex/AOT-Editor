@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { defineEmits } from 'vue';
-    import type { fontFamilyOptionsObj } from '@/types/allTypes';
+    import type { fontFamilyOptionsObj } from '../../types/allTypes';
 
     const emits = defineEmits(['confirmSetFontFamily']);
 

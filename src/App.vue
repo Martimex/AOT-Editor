@@ -85,12 +85,12 @@
       TextStyle,
       Youtube.configure({
         HTMLAttributes: {
-          class: `my-4`
+          class: `rounded-md`
         }
       }),
       Image.configure({
         HTMLAttributes: {
-          class: `my-4`
+          class: `rounded-md`
         }
       }),
       TextAlign.configure({
@@ -177,7 +177,7 @@
   }
 
   function handleDeleteNode() {
-    selectedEditorElement.value?.remove();
+    editor?.value?.commands.deleteSelection();
     selectedEditorElement.value = null;
   }
 
@@ -192,12 +192,32 @@
   }
 
   function handleAddImage(url: string) {
-    editor?.value?.chain().focus().setImage({ src: url }).run();
+    if(checkBlockEmbeddsButtons('img')) { throw new Error('Image creation failed. Please try again later'); }
+    const position = editor?.value?.state.selection.from as number;
+
+    editor?.value?.chain()
+    .setImage({ src: url })
+    .setNodeSelection(position - 1)
+    .insertContentAt(position, "<p></p>")
+    .setTextSelection(position + 1)
+    .focus()
+    .enter()
+    .run();
     handleCloseDialogBox();
   }
 
   function handleAddVideo(url: string) {
-    editor?.value?.chain().focus().setYoutubeVideo({ src: url }).run();
+    if(checkBlockEmbeddsButtons('iframe')) { throw new Error('Video creation failed. Please try again later'); }
+    const position = editor?.value?.state.selection.from as number;
+
+    editor?.value?.chain()
+      .setYoutubeVideo({ src: url })
+      .setNodeSelection(position - 1)
+      .insertContentAt(position, "<p></p>")
+      .setTextSelection(position + 1)
+      .focus()
+      .enter()
+      .run();
     handleCloseDialogBox();
   }
 
@@ -237,6 +257,22 @@
     if(testIfTextIsSelected.value) {
       return editor?.value?.isActive('link')? ` bg-[#222b] hover:cursor-pointer` : ` bg-[#eeeb] hover:cursor-pointer`;
     } else return ` bg-[#7777] hover:cursor-default`;
+  })
+  
+
+  function checkBlockEmbeddsButtons(tagName: 'img' | 'iframe'): boolean {
+    // Embedds = image and video buttons
+    return ((!editor?.value?.state.selection.from === undefined) && (selectedEditorElement_getTagName.value !== tagName));
+  }
+
+  const trackVideoButtonBg = computed(() => {
+    if(checkBlockEmbeddsButtons('iframe')) return ` bg-[#7777] hover:cursor-default`; 
+    return (selectedEditorElement_getTagName.value === 'iframe')? ` bg-[#222b] hover:cursor-pointer` : ` bg-[#eeeb] hover:cursor-pointer`;
+  })
+
+  const trackImageButtonBg = computed(() => {
+      if(checkBlockEmbeddsButtons('img')) return ` bg-[#7777] hover:cursor-default`; 
+      return (selectedEditorElement_getTagName.value === 'img')? ` bg-[#222b] hover:cursor-pointer` : ` bg-[#eeeb] hover:cursor-pointer`;
   })
 
   onMounted(() => {
@@ -677,11 +713,14 @@
 
 
             <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
-                  transition-colors hover:cursor-pointer
+                  transition-colors
                 "
                 data-role="style"
-                :class="selectedEditorElement_getTagName === `img`? `bg-[#222b]` : `bg-[#eeeb]`"
-                @click="(event: MouseEvent) => { console.log(selectedEditorElement_getTagName); selectedEditorElement_getTagName === `img` ? handleDeleteNode() : createDialogBox('image', event.target) }"
+                :class="trackImageButtonBg"
+                @click="(event: MouseEvent) => { 
+                  if(checkBlockEmbeddsButtons('img')) return;
+                  selectedEditorElement_getTagName === `img` ? handleDeleteNode() : createDialogBox('image', event.target) 
+                }"
             >
               <!-- TO REMOVE IMAGE, PERFORM A SELECTION REMOVAL AS:  editor?.chain().focus().deleteSelection().run() -->
                 <FontAwesomeIcon :icon="faImage" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
@@ -691,15 +730,18 @@
 
 
             <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
-                  transition-colors hover:cursor-pointer
+                  transition-colors
                 "
                 data-role="style"
-                :class="selectedEditorElement_getTagName === `div`? `bg-[#222b]` : `bg-[#eeeb]`"
-                @click="(event: MouseEvent) => { console.log(selectedEditorElement_getTagName); selectedEditorElement_getTagName === `div` ? handleDeleteNode() : createDialogBox('video', event.target) }"
+                :class="trackVideoButtonBg"
+                @click="(event: MouseEvent) => { 
+                  if(checkBlockEmbeddsButtons('iframe')) return;
+                  selectedEditorElement_getTagName === `iframe` ? handleDeleteNode() : createDialogBox('video', event.target) 
+                }"
             >
               <!-- TO REMOVE VIDEO, PERFORM A SELECTION REMOVAL AS:  editor?.chain().focus().deleteSelection().run() -->
                 <FontAwesomeIcon :icon="faPlay" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
-                  :class="selectedEditorElement_getTagName === `div`? `text-[#ddd]` : `text-[#333]`"
+                  :class="selectedEditorElement_getTagName === `iframe`? `text-[#ddd]` : `text-[#333]`"
                 />
             </div>
 
