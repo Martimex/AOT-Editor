@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
-import type { inputProperties, linkInputs } from '../../types/allTypes';
+import type { inputProperties, videoInputs } from '../../types/allTypes';
 
 const emits = defineEmits(['confirmAddVideo']);
 
-const inputsData: linkInputs = {
+const inputsData: videoInputs = {
     url: {  text: '', inputElement: ref(null), isTextCorrect: ref(true),  errorMessageElement: ref(null), validatingFunction: validateVideoURL }
 };
 
@@ -28,8 +28,8 @@ const handleAddVideo = function() {
     const inputsDataKeys = Object.keys(inputsData);
 
     const invalidInputFiledsCount = inputsDataKeys.reduce((acc, key: string) => {
-        const validationFunctionResult =  inputsData[key as keyof linkInputs].validatingFunction(inputsData[key as keyof linkInputs].text);
-        handleErrorTracing((validationFunctionResult === true)? [true, ''] : [false, validationFunctionResult], inputsData[key as keyof linkInputs]);
+        const validationFunctionResult =  inputsData[key as keyof videoInputs].validatingFunction(inputsData[key as keyof videoInputs].text);
+        handleErrorTracing((validationFunctionResult === true)? [true, ''] : [false, validationFunctionResult], inputsData[key as keyof videoInputs]);
         return validationFunctionResult === true? acc : acc + 1;
     }, 0)
 
@@ -38,7 +38,7 @@ const handleAddVideo = function() {
         // A convenience macro - if user forgets to type https or http at the URL beginning (which is required), the provided URL is automatically
         // being added an https://  clause at the very beginning
         const textToVerify_WithURLPrefix = /^(https?:\/\/)/.test(inputsData['url'].text.trim()) ? inputsData['url'].text.trim() : `https://` + inputsData['url'].text.trim();
-        emits('confirmAddVideo', textToVerify_WithURLPrefix);
+        emits('confirmAddVideo', {url: textToVerify_WithURLPrefix});
     }
 
 }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
-import type { inputProperties, linkInputs } from '../../types/allTypes';
+import type { inputProperties, imageInputs } from '../../types/allTypes';
 
 const emits = defineEmits(['confirmAddImage']);
 
-const inputsData: linkInputs = {
+const inputsData: imageInputs = {
     url: {  text: '', inputElement: ref(null), isTextCorrect: ref(true),  errorMessageElement: ref(null), validatingFunction: validateImageURL }
 };
 
@@ -28,8 +28,8 @@ const handleAddImage = function() {
     const inputsDataKeys = Object.keys(inputsData);
 
     const invalidInputFiledsCount = inputsDataKeys.reduce((acc, key: string) => {
-        const validationFunctionResult =  inputsData[key as keyof linkInputs].validatingFunction(inputsData[key as keyof linkInputs].text);
-        handleErrorTracing((validationFunctionResult === true)? [true, ''] : [false, validationFunctionResult], inputsData[key as keyof linkInputs]);
+        const validationFunctionResult =  inputsData[key as keyof imageInputs].validatingFunction(inputsData[key as keyof imageInputs].text);
+        handleErrorTracing((validationFunctionResult === true)? [true, ''] : [false, validationFunctionResult], inputsData[key as keyof imageInputs]);
         return validationFunctionResult === true? acc : acc + 1;
     }, 0)
 
@@ -38,7 +38,7 @@ const handleAddImage = function() {
         // A convenience macro - if user forgets to type https or http at the URL beginning (which is required), the provided URL is automatically
         // being added an https://  clause at the very beginning
         const textToVerify_WithURLPrefix = /^(https?:\/\/)/.test(inputsData['url'].text.trim()) ? inputsData['url'].text.trim() : `https://` + inputsData['url'].text.trim();
-        emits('confirmAddImage', textToVerify_WithURLPrefix);
+        emits('confirmAddImage', {url: textToVerify_WithURLPrefix});
     }
 
 }

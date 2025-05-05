@@ -5,10 +5,10 @@
   import OptionsList from './components/OptionsList.vue';
 
   import { ref, computed, reactive, onMounted } from 'vue';
-  import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames, lineHeightOptionsObj } from './types/allTypes';
+  import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames, lineHeightOptionsObj, linkInputsValues, imageInputsValues, videoInputsValues } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faGripLines, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPencil, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faGripLines, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { common, createLowlight } from 'lowlight';
 
@@ -41,6 +41,7 @@
   const documentTitle = { default: `Document`, current: ref<string>('Document') };
   const linkButton = ref<null | HTMLDivElement>(null);
   const [isTextSelected, selectionText] = [ref<boolean>(false), ref<string>('')];
+  const isCursorInsideEditor = ref<boolean>(true);
   const fontSizeInput = { current: ref<number>(16), default: 16,  min: 6,  max: 96, DOMElement: ref()};
   const fontFamilyInput = { current: ref<string>('Plus Jakarta Sans'), default: 'Plus Jakarta Sans' }
   const lineHeightInput = { current: ref<string>('150%'), default: '150%', convertFixedToPercentage: handleConvertFixedToPercentage }
@@ -56,6 +57,7 @@
       },
       optional: {
         targetWidth: 0,
+        selectedText: selectionText,
       }
     }),
     
@@ -67,6 +69,7 @@
       },
       optional: {
         targetWidth: 0,
+        selectedText: selectionText,
       }
     }),
   };
@@ -78,14 +81,24 @@
       FontSize,
       FontFamily,
       Underline,
-      Link, 
       Subscript, 
       Superscript, 
       Color, 
       TextStyle,
+      Link
+        .configure({
+          autolink: true,
+          shouldAutoLink: (url) => url.startsWith('https://'),
+          HTMLAttributes: {
+            /* class: `rounded-md hover:cursor-pointer`, */
+          }
+        })
+        .extend({
+          inclusive: false,
+        }),
       Youtube.configure({
         HTMLAttributes: {
-          class: `rounded-md`
+          class: `rounded-md hover:cursor-pointer`,
         }
       }),
       Image.configure({
@@ -186,12 +199,36 @@
     editor?.value?.commands.unsetLink(); 
   }
 
-  function handleAddLink(urlText: string) {
-    editor?.value?.chain().focus().setColor('hsl(208, 70%, 60%)').setUnderline().extendMarkRange('link').setLink({ href: urlText, target: '_blank' }).run()
+  function handleAddLink({alias, url}: linkInputsValues) {
+
+    editor?.value?.chain()
+      .focus()
+      .deleteSelection()
+      .unsetLink()
+      .extendMarkRange('link')
+      .setLink({ href: url, target: '_blank' })
+      .insertContentAt((editor?.value?.state.selection.from || 0), `${alias}`)
+      .setTextSelection((editor?.value?.state.selection.from + alias.length + 1 || 0))
+      .run();
+
+      /* Calls above work on SELECTION method, but not when user clicks on the LinkButton with no previous selection.
+        In such cases, there should be added a link alias field inside the LINKDIALOGBOX.VUE, that resolves as:
+        -> IF SELECTION IS PRESENT:  field defaults to Selection text, but it is editable
+        -> IF THERE IS NO SELECTION: field defaults to empty string, but it is editable. If it is left empty, its value is equal as provided URL
+
+        const SELECTION_FROM = editor?.value?.state.selection.from as number;
+        const SELECTION_TO = editor?.value?.state.selection.to as number;
+        const CURSOR_POSITION = editor?.value?.state.selection.$anchor.pos as number;
+        
+      */
+
+    // Mark the editor cursor as ACTIVE
+    isCursorInsideEditor.value = true;
+
     handleCloseDialogBox();
   }
 
-  function handleAddImage(url: string) {
+  function handleAddImage({url}: imageInputsValues) {
     if(checkBlockEmbeddsButtons('img')) { throw new Error('Image creation failed. Please try again later'); }
     const position = editor?.value?.state.selection.from as number;
 
@@ -206,7 +243,7 @@
     handleCloseDialogBox();
   }
 
-  function handleAddVideo(url: string) {
+  function handleAddVideo({url}: videoInputsValues) {
     if(checkBlockEmbeddsButtons('iframe')) { throw new Error('Video creation failed. Please try again later'); }
     const position = editor?.value?.state.selection.from as number;
 
@@ -251,12 +288,10 @@
     return testSelectedNodeOrigin(anchorNode.parentElement);
   }
 
-  const testIfTextIsSelected = computed(() => isTextSelected.value);
-
-  const trackButtonBg = computed(() => {
-    if(testIfTextIsSelected.value) {
+  const trackLinkButtonBg = computed(() => {
+    if(isCursorInsideEditor.value) {
       return editor?.value?.isActive('link')? ` bg-[#222b] hover:cursor-pointer` : ` bg-[#eeeb] hover:cursor-pointer`;
-    } else return ` bg-[#7777] hover:cursor-default`;
+    } else return ` bg-[#7777] hover:cursor-default`; 
   })
   
 
@@ -315,6 +350,10 @@
   }
 
   function trackSelectedText(e: MouseEvent) {
+
+    // Test if cursor is set inside the editor workspace
+    isCursorInsideEditor.value = editor?.value?.isFocused || false;
+
     // If any dialog box is open, we do not check for possible removal of Selection on any click
     if(dialogBoxType.value !== null) { return; }
     
@@ -558,13 +597,13 @@
                 />
             </div>
 
-            <div ref="linkButton" class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors
                 "
                 data-role="style"
-                :class="trackButtonBg"
+                :class="trackLinkButtonBg"
                 @click.self="(event: MouseEvent) => {
-                  if(!isTextSelected) { return; }
+                  if(!isCursorInsideEditor) { return; }
                   if(editor?.isActive('link')) handleCloseLink();
                   else createDialogBox('link', event.target); 
                 }"
@@ -573,6 +612,7 @@
                   :class="editor?.isActive('link')? `text-[#ddd]` : `text-[#333]`"
                 />
             </div>
+
 
             <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer

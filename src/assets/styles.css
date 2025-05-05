@@ -10,6 +10,12 @@ body {
     font-optical-sizing: auto;
 }
 
+a, a span {
+    color: hsl(208, 70%, 60%) !important;
+    text-decoration: underline;
+    /* transition: all 0.2s ease-in-out;  */
+}
+
 a:hover {
     cursor: pointer;
 }
@@ -18,7 +24,6 @@ a:hover {
     box-sizing: border-box;
     margin: 0 auto;
 }
-
 
 /* Used to style a iframe (video) & image tags */
 
