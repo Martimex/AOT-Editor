@@ -25,6 +25,14 @@ a:hover {
     margin: 0 auto;
 }
 
+/* This style affects only inline code tag (code), not the code blocks (pre > code) */
+
+:not(pre) > code {
+    background-color: #aaa5 !important;
+    padding: 0.25rem !important;
+    border-radius: 0.25rem !important;
+}
+
 /* Used to style a iframe (video) & image tags */
 
 iframe {

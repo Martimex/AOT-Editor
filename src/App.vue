@@ -8,7 +8,7 @@
   import type { allowedElementNamespace, dynamicElementsDetailsObj, availableOptionsListNames, lineHeightOptionsObj, linkInputsValues, imageInputsValues, videoInputsValues } from './types/allTypes';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faDownload, faFile, faForwardStep, faGripLines, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
+  import { faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight, faBackwardStep, faBold, faCloud, faCode, faLaptopCode, faDownload, faFile, faForwardStep, faGripLines, faImage, faItalic, faLink, faListOl, faListUl, faMinus, faPaintBrush, faPlay, faPlus, faStrikethrough, faSubscript, faSuperscript, faT, faUnderline } from '@fortawesome/free-solid-svg-icons';
 
   import { common, createLowlight } from 'lowlight';
 
@@ -29,6 +29,7 @@
   import ListItem from '@tiptap/extension-list-item';
   import Placeholder from '@tiptap/extension-placeholder';
   import CodeBlockLowLight from '@tiptap/extension-code-block-lowlight';
+  import Code from '@tiptap/extension-code';
   import Image from '@tiptap/extension-image';
   import Youtube from '@tiptap/extension-youtube';
 
@@ -503,7 +504,7 @@
             <span class="w-full text-xs row-start-2 col-start-2"> Last modified: Today </span>
         </section>
 
-        <div class="grid grid-cols-11 grid-rows-auto gap-2 items-center justify-center">
+        <div class="grid grid-cols-12 grid-rows-auto gap-2 items-center justify-center">
             
           <div class="relative flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
                   transition-colors hover:cursor-pointer
@@ -738,10 +739,22 @@
                   transition-colors hover:cursor-pointer
                 "
                 data-role="style"
+                :class="editor?.isActive('code')? `bg-[#222b]` : `bg-[#eeeb]`"
+                @click="editor?.chain().focus().toggleCode().run()"
+            >
+                <FontAwesomeIcon :icon="faCode" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                  :class="editor?.isActive('code')? `text-[#ddd]` : `text-[#333]`"
+                />
+            </div>
+
+            <div class="flex items-center justify-center w-6 h-6 p-4 rounded border-2 border-solid border-[#222b] shadow-[inset_-0.05rem_-0.05rem_0.1rem_#222]
+                  transition-colors hover:cursor-pointer
+                "
+                data-role="style"
                 :class="editor?.isActive('codeBlock')? `bg-[#222b]` : `bg-[#eeeb]`"
                 @click="editor?.chain().focus().toggleCodeBlock().run()"
             >
-                <FontAwesomeIcon :icon="faCode" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
+                <FontAwesomeIcon :icon="faLaptopCode" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
                   :class="editor?.isActive('codeBlock')? `text-[#ddd]` : `text-[#333]`"
                 />
             </div>
