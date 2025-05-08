@@ -301,12 +301,12 @@
   }
 
   const trackVideoButtonBg = computed(() => {
-    if(checkBlockEmbeddsButtons('iframe')) return ` bg-[#7777] hover:cursor-default`; 
+    if(!isCursorInsideEditor.value) return ` bg-[#7777] hover:cursor-default`; 
     return (selectedEditorElement_getTagName.value === 'iframe')? ` bg-[#222b] hover:cursor-pointer` : ` bg-[#eeeb] hover:cursor-pointer`;
   })
 
   const trackImageButtonBg = computed(() => {
-      if(checkBlockEmbeddsButtons('img')) return ` bg-[#7777] hover:cursor-default`; 
+      if(!isCursorInsideEditor.value) return ` bg-[#7777] hover:cursor-default`; 
       return (selectedEditorElement_getTagName.value === 'img')? ` bg-[#222b] hover:cursor-pointer` : ` bg-[#eeeb] hover:cursor-pointer`;
   })
 
@@ -758,7 +758,7 @@
                 data-role="style"
                 :class="trackImageButtonBg"
                 @click="(event: MouseEvent) => { 
-                  if(checkBlockEmbeddsButtons('img')) return;
+                  if(!isCursorInsideEditor) return;
                   selectedEditorElement_getTagName === `img` ? handleDeleteNode() : createDialogBox('image', event.target) 
                 }"
             >
@@ -775,7 +775,7 @@
                 data-role="style"
                 :class="trackVideoButtonBg"
                 @click="(event: MouseEvent) => { 
-                  if(checkBlockEmbeddsButtons('iframe')) return;
+                  if(!isCursorInsideEditor) return;
                   selectedEditorElement_getTagName === `iframe` ? handleDeleteNode() : createDialogBox('video', event.target) 
                 }"
             >
