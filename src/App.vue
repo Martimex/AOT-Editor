@@ -190,6 +190,19 @@
     return (fixedValue_number * 100).toString() + `%`;
   }
 
+  function isNextNodeAvailable(): boolean {
+    // Check if after the current selection there is a next node available
+    // -------------------------------------------------------------------
+    // This method is taking advantage of the fact that run() method returns true if the command was executed successfully
+    // and false if it was not. In this case, if there is no next node, the command will return false.
+      const isNextNode = editor?.value?.chain().selectNodeForward().run();
+      if(isNextNode) {
+        // Undo the previous action in case there is a next node
+        editor?.value?.chain().selectNodeBackward().run();
+      }
+      return isNextNode || false;
+  }
+
   function handleDeleteNode() {
     editor?.value?.commands.deleteSelection();
     selectedEditorElement.value = null;
@@ -227,6 +240,34 @@
     isCursorInsideEditor.value = true;
 
     handleCloseDialogBox();
+  }
+
+  function handleAddCodeBlock() {
+
+    if(!editor?.value) { throw new Error('Editor is not available'); }
+
+    const isNextNode = isNextNodeAvailable();
+  
+    if(!editor?.value?.isActive('codeBlock') && !isNextNode) {
+      const position = editor?.value?.state.selection.from as number;
+      editor.value.chain()
+        .focus()
+        .insertContentAt(editor?.value?.state.doc.content.size,'<p></p>')
+        .setTextSelection(position)
+        .toggleCodeBlock()
+        .run();
+    } else {
+      const position = editor?.value?.state.selection.from as number;
+      const positionInCurrentLine = editor?.value?.state.selection.$from.pos - editor?.value?.state.selection.$from.start();
+
+      editor.value.chain()
+        .focus()
+        .setTextSelection((positionInCurrentLine === 0)? position : position - 1)
+        .toggleCodeBlock()
+        .run();
+    }
+
+
   }
 
   function handleAddImage({url}: imageInputsValues) {
@@ -752,7 +793,7 @@
                 "
                 data-role="style"
                 :class="editor?.isActive('codeBlock')? `bg-[#222b]` : `bg-[#eeeb]`"
-                @click="editor?.chain().focus().toggleCodeBlock().run()"
+                @click="handleAddCodeBlock()"
             >
                 <FontAwesomeIcon :icon="faLaptopCode" class="text-base drop-shadow-[0rem_0rem_0.1rem_hsl(207,_90%,_70%)] pointer-events-none" 
                   :class="editor?.isActive('codeBlock')? `text-[#ddd]` : `text-[#333]`"
@@ -761,6 +802,7 @@
 
             <!-- CODE BLOCK BUTTON ISSUES :
               1) ___EXITING - if code block is active, clicking outside of the code block should cause the cursor focus to abandon the current code block instance. To be exited with editor.commands.exitCode()
+                => SOLVE: ADD AN EMPTY <P> tag after invoking the code block (same as with video and image) !
               2) ___CREATING_VIA_SELECTION - normally create code block with setCodeBlock(). Otherwise, if the editor text is selected while clicking the code button, opt for toggleCodeBlock() instead.
             -->
 
